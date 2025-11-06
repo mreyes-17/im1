@@ -127,24 +127,36 @@ svg{display:block}
 .sign span{font-family:"Great Vibes",cursive;color:var(--sig);font-size:clamp(1.2rem,5vw,1.6rem)}
 .sign img{width:76px;height:76px;border-radius:11px;object-fit:cover;box-shadow:0 6px 16px rgba(0,0,0,.16)}
 
-/* DESTELLO */
+/* DESTELLO global */
 .flash{position:fixed;inset:0;pointer-events:none;z-index:40;opacity:0}
 .flash.show{animation:flashIn 1.7s ease forwards}
 @keyframes flashIn{0%{opacity:0}12%{opacity:1;background:radial-gradient(60% 60% at 50% 50%, rgba(255,105,180,.55), rgba(255,105,180,.22) 45%, rgba(255,105,180,0) 70%)}100%{opacity:0}}
 
+/* Chispeo de tulipanes/corazones */
+.sparkle {
+  position: fixed;
+  z-index: 46;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 0 10px rgba(255,105,180,.85));
+  animation: twinkle 900ms ease-out forwards;
+  pointer-events: none;
+}
+@keyframes twinkle {
+  0%   { transform: scale(.6); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1.35); opacity: 0; }
+}
+
 /* AUDIO */
-.audio-info{position:fixed;left:50%;bottom:56px;transform:translateX(-50%);
-  width:300px;max-width:90vw;padding:10px 16px;border-radius:16px;
-  font-weight:700;font-size:1.05rem;color:#fff;background:#7a2c567c;
-  text-align:center;box-shadow:0 6px 20px rgba(255,105,180,.22);z-index:80;
-  transition:opacity .2s;}
 #playToggle{position:fixed;bottom:26px;right:24px;z-index:70;width:70px;height:70px;border-radius:50%;
   border:none;cursor:pointer;font-size:28px;background:radial-gradient(circle at 30% 30%, #ffbde3 0%, #ff69b4 60%, #ff2aa7 100%);
   color:white;box-shadow:0 0 20px rgba(255,105,180,.6);transition:transform .3s ease, box-shadow .3s ease}
 #playToggle:hover{transform:scale(1.08)}
 
+/* RESPONSIVE */
 @media (max-width:480px){
-  .audio-info{ bottom:44px;}
+  .banner{top:3vh}
+  .controls{bottom:6.5vh}
   #playToggle{width:60px;height:60px;font-size:24px;bottom:18px;right:16px}
 }
 @media (max-width:360px){
@@ -221,13 +233,9 @@ svg{display:block}
 <!-- Destello -->
 <div class="flash" id="flash"></div>
 
-<!-- AUTOPLAY INFO & AUDIO CONTROLS -->
-<div class="audio-info" id="audioInfo" style="opacity:0;pointer-events:none;">
-  Toca el botón <b>▶️</b> para activar la música 🎶<br>
-  Si no suena, asegúrate que el dispositivo tiene audio encendido y prueba de nuevo.
-</div>
+<!-- 🎵 Audio local -->
 <audio id="song" preload="auto" loop>
-  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  <source src="ssstik.io_1762269203857.mp3" type="audio/mpeg">
 </audio>
 <button id="playToggle" title="Reproducir/Pausar música">▶️</button>
 
@@ -250,7 +258,6 @@ const level=document.getElementById('level'),base=document.getElementById('base'
 let clicks=0,total=18,busy=false,done=false;
 const msgs=["🌸 El primero floreció.","🌷 Otro más, por ti.","💞 Late más fuerte.","✨ Ya se siente el amor.","🌷 Cada clic es cariño.","💗 Qué bonito va quedando.","🌸 Se llena de ti.","💞 Cada flor me recuerda a ti.","🌷 Ya casi, mi vida.","💖 Qué lindo está tu amor.","🌸 Sigue así, corazón.","💞 Casi lo logras.","🌷 Se ve hermoso.","💗 Falta poquito.","🌸 Ya casi, mi amor.","💞 Un poco más.","🌷 Último empujón.","💖 Lo llenaste todo."];
 
-/* POPs */
 function popSound(){try{const ac=new (window.AudioContext||window.webkitAudioContext)();
   const o=ac.createOscillator(),g=ac.createGain();
   o.type='sine';o.frequency.setValueAtTime(700,ac.currentTime);
@@ -260,7 +267,6 @@ function popSound(){try{const ac=new (window.AudioContext||window.webkitAudioCon
   o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+0.16);}catch(e){}}
 function popVisual(){const b=document.createElement('div');b.className='pop-burst';popBox.appendChild(b);b.addEventListener('animationend',()=>b.remove())}
 
-/* Tulipanes dentro del corazón */
 const placed=[];function d2(a,b){const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy}
 function addTulip(x,y,s){const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',x.toFixed(2));t.setAttribute('y',y.toFixed(2));t.setAttribute('font-size',s);t.textContent='🌷';t.setAttribute('class','bloom');fill.appendChild(t)}
 function pack(n,minD=26){let tries=0,add=0;while(add<n&&tries<600){tries++;const x=12+Math.random()*76,y=16+Math.random()*64,p={x,y};let ok=true;for(const q of placed){if(d2(p,q)<minD){ok=false;break}}if(ok){placed.push(p);addTulip(p.x,p.y,5.2+Math.random()*2.2);add++}}}
@@ -281,7 +287,6 @@ function advance(){
   setTimeout(()=>busy=false,140);
 }
 
-/* Botón: click, pointer, touch, teclado + ripple */
 function ripple(e){
   const r=document.createElement('span');r.className='ink';
   const rect=btn.getBoundingClientRect();
@@ -296,7 +301,7 @@ btn.addEventListener('pointerdown',press);
 btn.addEventListener('touchend',press,{passive:true});
 btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();press(e)}});
 
-/* ===== SOBRE (épico) + explosiones + CARTA persistente ===== */
+/* ===== SOBRE (épico) + chispeos + CARTA persistente ===== */
 const envWrap=document.getElementById('envWrap'),env=document.getElementById('env'),
       flapT=document.getElementById('flapT'),ribbon=document.getElementById('ribbon'),
       sheet=document.getElementById('sheet'),flash=document.getElementById('flash'),
@@ -307,15 +312,19 @@ function showEnvelope(){
   envWrap.style.display='grid';
   requestAnimationFrame(()=>env.classList.add('show'));
   setTimeout(()=>ribbon.classList.add('draw'), 900);
-  setTimeout(()=>{ribbon.classList.remove('draw'); explodeAt(innerWidth/2,innerHeight/2,120);}, 2100);
+  setTimeout(()=>{
+    ribbon.classList.remove('draw'); explodeAt(innerWidth/2,innerHeight/2,120); sparkleBurstAround(env,70);
+  },2100);
   setTimeout(()=>{env.animate([{transform:'translateY(0)'},{transform:'translateY(-3px)'},{transform:'translateY(0)'}],
-                {duration:350,easing:'ease-in-out'});}, 2500);
-  setTimeout(()=>{flapT.style.transform='rotateX(-178deg)';
+                {duration:350,easing:'ease-in-out'});},2500);
+  setTimeout(()=>{
+    flapT.style.transform='rotateX(-178deg)';
     env.animate([{transform:'rotateZ(0deg)'},{transform:'rotateZ(-1.6deg)'},{transform:'rotateZ(0deg)'}],
-                {duration:800,easing:'ease-in-out'});}, 2800);
-  setTimeout(()=>{sheet.classList.add('show');}, 3800);
-  setTimeout(()=>{envWrap.style.display='none'; showLetter();}, 5200);
-  setTimeout(autoPlaySong, 1000); // Reproduce la música tras abrir el sobre
+                {duration:800,easing:'ease-in-out'});
+    sparkleFromFlap(env,60);
+  },2800);
+  setTimeout(()=>{sheet.classList.add('show');},3800);
+  setTimeout(()=>{envWrap.style.display='none'; showLetter();},5200);
 }
 
 function explodeAt(cx,cy,count=80){
@@ -334,75 +343,79 @@ function explodeAt(cx,cy,count=80){
   }
 }
 
+/* Chispeo corona y desde solapa */
+function sparkleBurstAround(el, n = 60) {
+  const r = el.getBoundingClientRect();
+  const cx = r.left + r.width/2;
+  const cy = r.top  + r.height/2;
+  for (let i=0;i<n;i++){
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.textContent = (i % 2) ? '🌷' : '💖';
+    const angle = Math.random() * Math.PI * 2;
+    const ring  = (Math.min(r.width,r.height) * 0.45) + Math.random()*24;
+    const dx = Math.cos(angle) * ring;
+    const dy = Math.sin(angle) * ring;
+    const drift = 60 + Math.random()*120;
+    const dx2 = Math.cos(angle) * drift;
+    const dy2 = Math.sin(angle) * drift;
+    s.style.left = (cx + dx) + 'px';
+    s.style.top  = (cy + dy) + 'px';
+    s.style.setProperty('--dx', dx2+'px');
+    s.style.setProperty('--dy', dy2+'px');
+    s.style.setProperty('--rot', (Math.random()*360-180)+'deg');
+    s.style.fontSize = (18 + Math.random()*14) + 'px';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(), 950);
+  }
+}
+function sparkleFromFlap(el, n = 40) {
+  const r = el.getBoundingClientRect();
+  const topY = r.top + r.height*0.18;
+  const leftX = r.left + r.width*0.12;
+  const w = r.width*0.76;
+  for (let i=0;i<n;i++){
+    const s=document.createElement('div'); s.className='sparkle'; s.textContent=(i%3)?'🌷':'💖';
+    const x=leftX+Math.random()*w; const y=topY+Math.random()*16-8;
+    const dx=(Math.random()*2-1)*90; const dy=-(80+Math.random()*120);
+    s.style.left=x+'px'; s.style.top=y+'px';
+    s.style.setProperty('--dx',dx+'px'); s.style.setProperty('--dy',dy+'px');
+    s.style.setProperty('--rot',(Math.random()*360-180)+'deg');
+    s.style.fontSize=(16+Math.random()*12)+'px';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),950);
+  }
+}
+
 function showLetter(){
+  const song=document.getElementById('song');
+  const playToggle=document.getElementById('playToggle');
+
   letter.classList.add('show');
   document.querySelectorAll('.p').forEach(p=>p.classList.add('reveal'));
   document.getElementById('sign').classList.add('reveal');
 
-  /* 🔒 Garantía extra: fija estado final tras animación */
+  // 🔊 Música local: autoplay al abrir la carta
+  song.currentTime=0;
+  song.play().then(()=>{ playToggle.textContent='⏸️'; })
+    .catch(()=>console.log('Autoplay bloqueado: toca el botón ▶️'));
+
+  // fijar estado final
   const lockFinal=()=>{
     letter.style.opacity='1';
     letter.style.visibility='visible';
     letter.style.transform='translate(-50%,-50%) scale(1) rotateX(0)';
   };
   letter.addEventListener('animationend',lockFinal,{once:true});
-  // por si el navegador cancela la animación:
   setTimeout(lockFinal,1300);
-}
 
-/* ===== Audio ===== */
-const song=document.getElementById('song'),
-      playToggle=document.getElementById('playToggle'),
-      audioInfo=document.getElementById('audioInfo');
-let playing=false;
-
-// Botón clásico (backup si autoplay falla)
-playToggle.addEventListener('click',()=>{
-  if(!playing){
-    song.play().then(()=>{
-      playing=true;
-      playToggle.textContent='⏸️';
-      playToggle.style.boxShadow='0 0 25px rgba(255,255,255,.8),0 0 50px rgba(255,105,180,.8)';
-      audioInfo.style.opacity=0;
-      audioInfo.style.pointerEvents='none';
-    }).catch((err)=>{
-      audioInfo.innerHTML='Toca de nuevo o activa el sonido en tu navegador/dispositivo 🎶';
-      audioInfo.style.opacity=1;
-      audioInfo.style.pointerEvents='auto';
-    });
-  } else {
-    song.pause();
-    playing=false;
-    playToggle.textContent='▶️';
-    playToggle.style.boxShadow='0 0 20px rgba(255,105,180,.6)';
-    audioInfo.innerHTML='Música pausada ⏸️';
-    audioInfo.style.opacity=1;
-    audioInfo.style.pointerEvents='auto';
-    setTimeout(()=>audioInfo.style.opacity=0,2000);
-  }
-});
-
-song.addEventListener('pause', ()=>{
-  playing=false;
-  playToggle.textContent='▶️';
-});
-song.addEventListener('play', ()=>{
-  playing=true;
-  playToggle.textContent='⏸️';
-});
-
-function autoPlaySong() {
-  song.play().then(()=>{
-    playing=true;
-    playToggle.textContent='⏸️';
-    playToggle.style.boxShadow='0 0 25px rgba(255,255,255,.8),0 0 50px rgba(255,105,180,.8)';
-    audioInfo.style.opacity=0;
-    audioInfo.style.pointerEvents='none';
-  }).catch((err)=>{
-    audioInfo.innerHTML='Toca el botón <b>▶️</b> arriba para activar la música 🎶<br>Si no suena, activa el audio en tu dispositivo y prueba de nuevo.';
-    audioInfo.style.opacity=1;
-    audioInfo.style.pointerEvents='auto';
-  });
+  // botón toggle
+  let playing=true;
+  playToggle.onclick=()=>{
+    if(playing){ song.pause(); playToggle.textContent='▶️'; }
+    else { song.play().catch(()=>{}); playToggle.textContent='⏸️'; }
+    playing=!playing;
+  };
 }
 
 /* ===== lluvia inicial ===== */

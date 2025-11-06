@@ -97,14 +97,14 @@ svg{display:block}
   position:fixed;left:50%;top:50%;
   width:min(96vw,1020px);height:min(92vh,930px);
   transform:translate(-50%,-50%) scale(.9) rotateX(8deg);
-  opacity:0; visibility:hidden;  /* 👈 protegida por visibilidad */
+  opacity:0; visibility:hidden;
   z-index:50;
   border-radius:22px;padding:clamp(14px,3.5vw,34px);
   background:url('269e17ff0854a88e3c019cbf3ab1c8b1.jpg') center/cover no-repeat;
   box-shadow:0 30px 90px rgba(0,0,0,.32);display:grid;place-items:stretch;pointer-events:auto
 }
 .letter.show{
-  visibility:visible;  /* 👈 visible cuando aparece */
+  visibility:visible;
   animation:tiltOpen 1100ms cubic-bezier(.22,1,.36,1) forwards,glowRing 1500ms ease-out 200ms both
 }
 @keyframes tiltOpen{
@@ -133,15 +133,18 @@ svg{display:block}
 @keyframes flashIn{0%{opacity:0}12%{opacity:1;background:radial-gradient(60% 60% at 50% 50%, rgba(255,105,180,.55), rgba(255,105,180,.22) 45%, rgba(255,105,180,0) 70%)}100%{opacity:0}}
 
 /* AUDIO */
+.audio-info{position:fixed;left:50%;bottom:56px;transform:translateX(-50%);
+  width:300px;max-width:90vw;padding:10px 16px;border-radius:16px;
+  font-weight:700;font-size:1.05rem;color:#fff;background:#7a2c567c;
+  text-align:center;box-shadow:0 6px 20px rgba(255,105,180,.22);z-index:80;
+  transition:opacity .2s;}
 #playToggle{position:fixed;bottom:26px;right:24px;z-index:70;width:70px;height:70px;border-radius:50%;
   border:none;cursor:pointer;font-size:28px;background:radial-gradient(circle at 30% 30%, #ffbde3 0%, #ff69b4 60%, #ff2aa7 100%);
   color:white;box-shadow:0 0 20px rgba(255,105,180,.6);transition:transform .3s ease, box-shadow .3s ease}
 #playToggle:hover{transform:scale(1.08)}
 
-/* RESPONSIVE */
 @media (max-width:480px){
-  .banner{top:3vh}
-  .controls{bottom:6.5vh}
+  .audio-info{ bottom:44px;}
   #playToggle{width:60px;height:60px;font-size:24px;bottom:18px;right:16px}
 }
 @media (max-width:360px){
@@ -218,9 +221,13 @@ svg{display:block}
 <!-- Destello -->
 <div class="flash" id="flash"></div>
 
-<!-- Audio (Drive para evitar bloqueo) -->
+<!-- AUTOPLAY INFO & AUDIO CONTROLS -->
+<div class="audio-info" id="audioInfo" style="opacity:0;pointer-events:none;">
+  Toca el botón <b>▶️</b> para activar la música 🎶<br>
+  Si no suena, asegúrate que el dispositivo tiene audio encendido y prueba de nuevo.
+</div>
 <audio id="song" preload="auto" loop>
-  <source src="https://drive.google.com/uc?export=download&id=1Cs0UM5jiMLn7VsLlwUGUZJ8emcZgEA0W" type="audio/mpeg">
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
 </audio>
 <button id="playToggle" title="Reproducir/Pausar música">▶️</button>
 
@@ -308,6 +315,7 @@ function showEnvelope(){
                 {duration:800,easing:'ease-in-out'});}, 2800);
   setTimeout(()=>{sheet.classList.add('show');}, 3800);
   setTimeout(()=>{envWrap.style.display='none'; showLetter();}, 5200);
+  setTimeout(autoPlaySong, 1000); // Reproduce la música tras abrir el sobre
 }
 
 function explodeAt(cx,cy,count=80){
@@ -343,16 +351,59 @@ function showLetter(){
 }
 
 /* ===== Audio ===== */
-const song=document.getElementById('song'), playToggle=document.getElementById('playToggle');
+const song=document.getElementById('song'),
+      playToggle=document.getElementById('playToggle'),
+      audioInfo=document.getElementById('audioInfo');
 let playing=false;
+
+// Botón clásico (backup si autoplay falla)
 playToggle.addEventListener('click',()=>{
   if(!playing){
-    song.play().then(()=>{playing=true;playToggle.textContent='⏸️';
-      playToggle.style.boxShadow='0 0 25px rgba(255,255,255,.8),0 0 50px rgba(255,105,180,.8)';})
-    .catch(()=>alert('Activa el sonido o toca de nuevo 🎶'));
-  }else{song.pause();playing=false;playToggle.textContent='▶️';
-    playToggle.style.boxShadow='0 0 20px rgba(255,105,180,.6)';}
+    song.play().then(()=>{
+      playing=true;
+      playToggle.textContent='⏸️';
+      playToggle.style.boxShadow='0 0 25px rgba(255,255,255,.8),0 0 50px rgba(255,105,180,.8)';
+      audioInfo.style.opacity=0;
+      audioInfo.style.pointerEvents='none';
+    }).catch((err)=>{
+      audioInfo.innerHTML='Toca de nuevo o activa el sonido en tu navegador/dispositivo 🎶';
+      audioInfo.style.opacity=1;
+      audioInfo.style.pointerEvents='auto';
+    });
+  } else {
+    song.pause();
+    playing=false;
+    playToggle.textContent='▶️';
+    playToggle.style.boxShadow='0 0 20px rgba(255,105,180,.6)';
+    audioInfo.innerHTML='Música pausada ⏸️';
+    audioInfo.style.opacity=1;
+    audioInfo.style.pointerEvents='auto';
+    setTimeout(()=>audioInfo.style.opacity=0,2000);
+  }
 });
+
+song.addEventListener('pause', ()=>{
+  playing=false;
+  playToggle.textContent='▶️';
+});
+song.addEventListener('play', ()=>{
+  playing=true;
+  playToggle.textContent='⏸️';
+});
+
+function autoPlaySong() {
+  song.play().then(()=>{
+    playing=true;
+    playToggle.textContent='⏸️';
+    playToggle.style.boxShadow='0 0 25px rgba(255,255,255,.8),0 0 50px rgba(255,105,180,.8)';
+    audioInfo.style.opacity=0;
+    audioInfo.style.pointerEvents='none';
+  }).catch((err)=>{
+    audioInfo.innerHTML='Toca el botón <b>▶️</b> arriba para activar la música 🎶<br>Si no suena, activa el audio en tu dispositivo y prueba de nuevo.';
+    audioInfo.style.opacity=1;
+    audioInfo.style.pointerEvents='auto';
+  });
+}
 
 /* ===== lluvia inicial ===== */
 (function seedRain(){for(let i=0;i<10;i++)drop()})();
